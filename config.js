@@ -6,7 +6,7 @@
 const SUPABASE_URL = 'https://gwoiyqdqoahutybwmjbj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3b2l5cWRxb2FodXR5YndtamJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2ODc3OTUsImV4cCI6MjA5MDI2Mzc5NX0.0l6EaIi-9JJWm-ghHq2VWV1IgL02fdj5GagYpI8brvY';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================
 // Auth Helper — redirect to login if not logged in
