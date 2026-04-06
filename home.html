@@ -125,7 +125,7 @@ function getStreakMessage(s) {
 }
 
 async function saveChecklist() {
-  await supabase.from('checklist_logs').upsert({
+  await db.from('checklist_logs').upsert({
     user_id: userId, date: todayStr(),
     completed_tasks: completedTasks, water_cups: waterCups
   }, { onConflict: 'user_id,date' });
@@ -134,7 +134,7 @@ async function saveChecklist() {
 async function logWeight() {
   const val = parseFloat(document.getElementById('weight-input').value);
   if (!val || val < 20 || val > 400) return showToast('Enter a valid weight', 'error');
-  const { error } = await supabase.from('weight_logs').upsert(
+  const { error } = await db.from('weight_logs').upsert(
     { user_id: userId, date: todayStr(), weight_kg: val },
     { onConflict: 'user_id,date' }
   );
@@ -178,7 +178,7 @@ function toggleWater(idx) {
   saveChecklist();
 }
 
-async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+async function logout() { await db.auth.signOut(); window.location.href = 'index.html'; }
 
 function renderPage({ prof, todayChecklist, recentLogs, lastWeight }) {
   completedTasks = todayChecklist?.completed_tasks || [];
@@ -283,9 +283,9 @@ function renderPage({ prof, todayChecklist, recentLogs, lastWeight }) {
 
   const [prof, todayChecklist, recentLogs, lastWeightRes] = await Promise.all([
     getUserProfile(userId),
-    supabase.from('checklist_logs').select('*').eq('user_id', userId).eq('date', todayStr()).single().then(r => r.data),
-    supabase.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', {ascending: false}).limit(30).then(r => r.data || []),
-    supabase.from('weight_logs').select('*').eq('user_id', userId).order('date', {ascending: false}).limit(1).single().then(r => r.data)
+    db.from('checklist_logs').select('*').eq('user_id', userId).eq('date', todayStr()).single().then(r => r.data),
+    db.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', {ascending: false}).limit(30).then(r => r.data || []),
+    db.from('weight_logs').select('*').eq('user_id', userId).order('date', {ascending: false}).limit(1).single().then(r => r.data)
   ]);
   profile = prof;
   renderPage({ prof, todayChecklist, recentLogs, lastWeight: lastWeightRes });

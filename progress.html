@@ -66,8 +66,8 @@
 
   const [prof, weightLogs, checkLogs] = await Promise.all([
     getUserProfile(userId),
-    supabase.from('weight_logs').select('*').eq('user_id', userId).order('date', { ascending: true }).then(r => r.data || []),
-    supabase.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', { ascending: false }).limit(56).then(r => r.data || [])
+    db.from('weight_logs').select('*').eq('user_id', userId).order('date', { ascending: true }).then(r => r.data || []),
+    db.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', { ascending: false }).limit(56).then(r => r.data || [])
   ]);
 
   const totalLost = weightLogs.length > 0
@@ -246,7 +246,7 @@
 })();
 
 async function logout() {
-  await supabase.auth.signOut();
+  await db.auth.signOut();
   window.location.href = 'index.html';
 }
 </script>

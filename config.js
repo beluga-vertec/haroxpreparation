@@ -12,7 +12,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Auth Helper — redirect to login if not logged in
 // ============================================
 async function requireAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await db.auth.getSession();
   if (!session) {
     window.location.href = 'index.html';
     return null;
@@ -24,7 +24,7 @@ async function requireAuth() {
 // Get user profile from DB
 // ============================================
 async function getUserProfile(userId) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('user_profiles')
     .select('*')
     .eq('id', userId)
