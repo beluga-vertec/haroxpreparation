@@ -3,8 +3,8 @@
 // Replace these with YOUR Supabase project values
 // Found at: supabase.com → your project → Settings → API
 // ============================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://gwoiyqdqoahutybwmjbj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3b2l5cWRxb2FodXR5YndtamJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2ODc3OTUsImV4cCI6MjA5MDI2Mzc5NX0.0l6EaIi-9JJWm-ghHq2VWV1IgL02fdj5GagYpI8brvY';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
