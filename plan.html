@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYROX Life — My Plan</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .timeline { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .tl-item { display: grid; grid-template-columns: 72px 1fr; gap: 0; }
+  .tl-time { font-family: var(--font-m); font-size: 11px; color: var(--accent); padding: 13px 12px 13px 0; text-align: right; position: relative; }
+  .tl-time::after { content: ''; position: absolute; right: -1px; top: 50%; transform: translateY(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); z-index: 2; }
+  .tl-line { position: absolute; left: 72px; top: 0; bottom: 0; width: 1px; background: var(--border); z-index: 1; }
+  .tl-body { background: var(--card); border: 1px solid var(--border); border-radius: 9px; padding: 11px 14px; margin-left: 16px; transition: border-color 0.2s, transform 0.2s; }
+  .tl-body:hover { border-color: var(--border2); transform: translateX(3px); }
+  .tl-body.y { border-color: rgba(240,192,64,0.35); background: rgba(240,192,64,0.05); }
+  .tl-body.b { border-color: rgba(64,200,240,0.35); background: rgba(64,200,240,0.05); }
+  .tl-body.g { border-color: rgba(64,232,168,0.35); background: rgba(64,232,168,0.05); }
+  .tl-body.r { border-color: rgba(240,72,112,0.35); background: rgba(240,72,112,0.05); }
+  .tl-body.p { border-color: rgba(160,96,240,0.35); background: rgba(160,96,240,0.05); }
+  .tl-name { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+  .tl-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .tl-desc strong { color: var(--accent); }
+  .tl-desc .blue { color: var(--accent2); }
+  .tl-desc .green { color: var(--green); }
+  .tl-desc .red { color: var(--accent3); }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .day-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .day-tab { font-family: var(--font-m); font-size: 10px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+  .day-tab:hover, .day-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .day-tab.rest.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+  .workout-day { display: none; }
+  .workout-day.active { display: block; animation: fadeIn 0.3s ease both; }
+  .ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  @media (max-width:380px) { .ex-grid { grid-template-columns: 1fr; } }
+  .ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; }
+  .ex-name { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+  .ex-sets { font-family: var(--font-m); font-size: 11px; color: var(--accent); }
+  .ex-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .warm-card { background: var(--card); border: 1px solid rgba(240,192,64,0.2); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .warm-title { font-family: var(--font-d); font-size: 16px; letter-spacing: 2px; color: var(--accent); margin-bottom: 10px; }
+  .rest-card { background: var(--green-dim); border: 1px solid rgba(64,232,168,0.3); border-radius: 12px; padding: 28px; text-align: center; }
+  .section-block { margin-bottom: 28px; }
+
+  /* Run block styling */
+  .run-block { background: linear-gradient(135deg, rgba(240,72,112,0.12), rgba(240,72,112,0.05)); border: 1px solid rgba(240,72,112,0.35); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .run-title { font-family: var(--font-d); font-size: 18px; letter-spacing: 2px; color: var(--accent3); margin-bottom: 8px; }
+  .run-rounds { display: flex; gap: 8px; }
+  .run-round { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; text-align: center; }
+  .run-round-num { font-family: var(--font-d); font-size: 22px; color: var(--accent3); line-height: 1; }
+  .run-round-label { font-family: var(--font-m); font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-text">LOADING PLAN</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item"><span class="nav-icon">✅</span><span class="nav-label">Today</span></a>
+  <a href="plan.html" class="nav-item active"><span class="nav-icon">📋</span><span class="nav-label">Plan</span></a>
+  <a href="progress.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Progress</span></a>
+  <a href="rules.html" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-label">Rules</span></a>
+  <a href="supplements.html" class="nav-item"><span class="nav-icon">💊</span><span class="nav-label">Supps</span></a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  const prof = await getUserProfile(session.user.id);
+
+  document.getElementById('app').innerHTML = `
+    <div class="page-wrap">
+      <div class="topbar anim-up">
+        <div><div class="topbar-logo">HYROX <span style="color:var(--text2)">LIFE</span></div></div>
+        <div class="topbar-right">
+          <div class="topbar-user">${prof.name.toUpperCase()}</div>
+          <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+      </div>
+
+      <!-- ── MORNING WORKOUT ── -->
+      <div class="section-block anim-up-1">
+        <div class="section-head">
+          <div class="section-icon si-red">🔥</div>
+          <div class="section-title">MORNING WORKOUT</div>
+          <div class="section-sub">5:00 – 6:45AM</div>
+        </div>
+        <div class="timeline">
+          <div class="tl-line"></div>
+          <div class="tl-item">
+            <div class="tl-time">5:00</div>
+            <div class="tl-body y">
+              <div class="tl-name">Wake Up — No Snooze</div>
+              <div class="tl-desc">Sit up immediately. Drink <strong>500ml plain water</strong> before anything. This is the first habit of the day.</div>
+              <div class="tags"><span class="tag tag-b">WATER</span><span class="tag tag-r">NON-NEGOTIABLE</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">5:05</div>
+            <div class="tl-body y">
+              <div class="tl-name">⚡ Pre-Workout Fuel</div>
+              <div class="tl-desc"><strong>2–3 dates</strong> OR <strong>half banana</strong>. Small fuel. Never train on completely empty stomach — especially with running first.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">5:10</div>
+            <div class="tl-body">
+              <div class="tl-name">🔥 Warm Up — 8 Minutes</div>
+              <div class="tl-desc">March on spot (1 min) → Arm circles (30s each) → Hip circles (30s) → Neck rolls (30s) → Bodyweight squats slow (10 reps) → Shoulder rolls (30s). <strong>Never skip this before running.</strong></div>
+              <div class="tags"><span class="tag tag-r">EVERY DAY</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">5:18</div>
+            <div class="tl-body r">
+              <div class="tl-name">🏃 TREADMILL — 5 Rounds</div>
+              <div class="tl-desc">Run 5 rounds on treadmill. Total ~25–30 min depending on your pace.<br><br>
+              <strong>Week 1–2:</strong> All 5 rounds walking fast (5.5–6 km/h)<br>
+              <strong>Week 3–4:</strong> 3 walk + 2 jog (7–8 km/h for jog rounds)<br>
+              <strong>Month 2+:</strong> 2 walk + 3 jog → build toward all 5 jogging<br><br>
+              Rest 60–90 sec between rounds. Drink water between rounds.</div>
+              <div class="tags"><span class="tag tag-r">RUN FIRST</span><span class="tag tag-y">5 ROUNDS</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">5:50</div>
+            <div class="tl-body">
+              <div class="tl-name">💪 Dumbbell Workout (see tabs below)</div>
+              <div class="tl-desc">Straight into weights after treadmill. This is <strong>compromised training</strong> — exactly what HYROX demands. Your heart rate is already elevated. That's the point.</div>
+              <div class="tags"><span class="tag tag-y">~35–40 MIN</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">6:30</div>
+            <div class="tl-body g">
+              <div class="tl-name">🧘 Cool Down — 10 Min</div>
+              <div class="tl-desc">Quad stretch (30s each) → Hamstring (30s each) → Chest opener (30s) → Shoulder stretch (30s each) → Child's pose (1 min) → Deep breathing (1 min 4-in/6-out). <strong>Not optional.</strong></div>
+              <div class="tags"><span class="tag tag-g">EVERY DAY</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">6:40</div>
+            <div class="tl-body y">
+              <div class="tl-name">🥛 Whey Protein — 30 Min Window</div>
+              <div class="tl-desc"><strong>1 scoop in 300ml cold water.</strong> Drink now. Muscles are primed to absorb protein post-workout. Don't delay.</div>
+              <div class="tags"><span class="tag tag-y">SUPPLEMENT</span><span class="tag tag-r">TIME SENSITIVE</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">6:45</div>
+            <div class="tl-body b">
+              <div class="tl-name">🚿 Shower</div>
+              <div class="tl-desc">Lukewarm first. End with <strong>30 sec cool water.</strong> Reduces muscle inflammation. Wakes you up fully for the work day ahead.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TREADMILL ROUND GUIDE ── -->
+      <div class="section-block anim-up-2">
+        <div class="section-head">
+          <div class="section-icon si-red">🏃</div>
+          <div class="section-title">5 ROUNDS GUIDE</div>
+          <div class="section-sub">HOW TO PROGRESS</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Each "round" = one continuous effort on the treadmill before a rest. Build up over weeks.</div>
+        <div style="display:grid;gap:8px;">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
+            <div style="font-family:var(--font-d);font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">WEEKS 1–2 · BASE BUILD</div>
+            <div style="font-size:12px;color:var(--text2);">All 5 rounds brisk walk at <strong style="color:var(--accent)">5.5–6.0 km/h</strong>. 3–4 min per round. Rest 60s between. Total ~25 min. Focus: consistency, not speed.</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
+            <div style="font-family:var(--font-d);font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">WEEKS 3–4 · FIRST JOGS</div>
+            <div style="font-size:12px;color:var(--text2);">Rounds 1, 3, 5: walk at <strong style="color:var(--accent)">5.5 km/h</strong>. Rounds 2, 4: jog at <strong style="color:var(--accent)">7.0–7.5 km/h</strong>. Rest 90s after jog rounds.</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
+            <div style="font-family:var(--font-d);font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">MONTH 2 · BUILD PACE</div>
+            <div style="font-size:12px;color:var(--text2);">1 walk + 4 jog. Push jog to <strong style="color:var(--accent)">8.0 km/h</strong>. Reduce rest to 60s. You're building HYROX cardio base here.</div>
+          </div>
+          <div style="background:var(--card);border:1px solid rgba(240,192,64,0.3);border-radius:9px;padding:12px 14px;">
+            <div style="font-family:var(--font-d);font-size:14px;letter-spacing:2px;color:var(--accent);margin-bottom:6px;">MONTH 3+ · ALL 5 RUNNING</div>
+            <div style="font-size:12px;color:var(--text2);">All 5 rounds jogging at <strong style="color:var(--accent)">8.0–9.0 km/h</strong>. This is your HYROX prep pace. The dumbbell workout after this = race simulation.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── WORKOUT SPLIT ── -->
+      <div class="section-block anim-up-3">
+        <div class="section-head">
+          <div class="section-icon si-yellow">💪</div>
+          <div class="section-title">DUMBBELL SPLIT</div>
+          <div class="section-sub">AFTER TREADMILL</div>
+        </div>
+
+        <div class="day-tabs" id="dayTabs">
+          <div class="day-tab active" onclick="showDay('mon',this)">MON</div>
+          <div class="day-tab" onclick="showDay('tue',this)">TUE</div>
+          <div class="day-tab" onclick="showDay('wed',this)">WED</div>
+          <div class="day-tab" onclick="showDay('thu',this)">THU</div>
+          <div class="day-tab" onclick="showDay('fri',this)">FRI</div>
+          <div class="day-tab rest" onclick="showDay('sat',this)">SAT</div>
+          <div class="day-tab rest" onclick="showDay('sun',this)">SUN</div>
+        </div>
+
+        <div class="workout-day active" id="day-mon">
+          <div style="font-family:var(--font-d);font-size:20px;letter-spacing:3px;color:var(--accent3);margin-bottom:6px;">MON — PUSH DAY</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Chest + Shoulders + Triceps · Start 5kg, move to 6kg after 2 weeks</div>
+          <div class="ex-grid">
+            <div class="ex-card"><div class="ex-name">DB Bench Press</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Press up, lower slowly</div></div>
+            <div class="ex-card"><div class="ex-name">DB Shoulder Press</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Seated, full range</div></div>
+            <div class="ex-card"><div class="ex-name">DB Lateral Raise</div><div class="ex-sets">3 × 15 · Rest 45s</div><div class="ex-note">Arms out, controlled</div></div>
+            <div class="ex-card"><div class="ex-name">DB Chest Fly</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Wide arc, feel stretch</div></div>
+            <div class="ex-card"><div class="ex-name">Tricep Overhead Ext.</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Both hands, one DB</div></div>
+            <div class="ex-card"><div class="ex-name">Push-Ups</div><div class="ex-sets">2 × MAX · Rest 60s</div><div class="ex-note">To failure counts</div></div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-tue">
+          <div style="font-family:var(--font-d);font-size:20px;letter-spacing:3px;color:var(--accent2);margin-bottom:6px;">TUE — PULL DAY</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Back + Biceps</div>
+          <div class="ex-grid">
+            <div class="ex-card"><div class="ex-name">DB Bent Over Row</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Hinge forward, row to hip</div></div>
+            <div class="ex-card"><div class="ex-name">DB Single Arm Row</div><div class="ex-sets">3 × 12 each · Rest 60s</div><div class="ex-note">Knee on bench</div></div>
+            <div class="ex-card"><div class="ex-name">DB Bicep Curl</div><div class="ex-sets">3 × 12 · Rest 45s</div><div class="ex-note">Slow up, slow down</div></div>
+            <div class="ex-card"><div class="ex-name">DB Hammer Curl</div><div class="ex-sets">3 × 12 · Rest 45s</div><div class="ex-note">Thumbs-up grip</div></div>
+            <div class="ex-card"><div class="ex-name">DB Shrugs</div><div class="ex-sets">3 × 15 · Rest 45s</div><div class="ex-note">Shrug straight up</div></div>
+            <div class="ex-card"><div class="ex-name">Superman Hold</div><div class="ex-sets">3 × 10s · Rest 45s</div><div class="ex-note">Face down, lift all 4</div></div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-wed">
+          <div style="font-family:var(--font-d);font-size:20px;letter-spacing:3px;color:var(--green);margin-bottom:6px;">WED — LEGS + CORE</div>
+          <div class="ex-grid">
+            <div class="ex-card"><div class="ex-name">BW Squat</div><div class="ex-sets">3 × 15 · Rest 60s</div><div class="ex-note">Chest up, parallel</div></div>
+            <div class="ex-card"><div class="ex-name">DB Goblet Squat</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">DB at chest, squat deep</div></div>
+            <div class="ex-card"><div class="ex-name">DB Romanian DL</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Hinge hips back</div></div>
+            <div class="ex-card"><div class="ex-name">Calf Raises</div><div class="ex-sets">3 × 20 · Rest 45s</div><div class="ex-note">Step edge, rise on toes</div></div>
+            <div class="ex-card"><div class="ex-name">Plank</div><div class="ex-sets">3 × 30s · Rest 45s</div><div class="ex-note">Build toward 60s</div></div>
+            <div class="ex-card"><div class="ex-name">Lying Leg Raises</div><div class="ex-sets">3 × 12 · Rest 45s</div><div class="ex-note">Straight legs up</div></div>
+            <div class="ex-card"><div class="ex-name">Crunches</div><div class="ex-sets">3 × 15 · Rest 45s</div><div class="ex-note">Don't yank neck</div></div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-thu">
+          <div style="font-family:var(--font-d);font-size:20px;letter-spacing:3px;color:var(--accent3);margin-bottom:6px;">THU — PUSH DAY (Heavier)</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Same as Monday — increase weight or reps where possible</div>
+          <div class="ex-grid">
+            <div class="ex-card"><div class="ex-name">DB Bench Press</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Try 6kg if Mon felt easy</div></div>
+            <div class="ex-card"><div class="ex-name">DB Shoulder Press</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Press high, full range</div></div>
+            <div class="ex-card"><div class="ex-name">DB Lateral Raise</div><div class="ex-sets">3 × 15 · Rest 45s</div><div class="ex-note">Slow and controlled</div></div>
+            <div class="ex-card"><div class="ex-name">DB Chest Fly</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Full stretch at bottom</div></div>
+            <div class="ex-card"><div class="ex-name">Tricep Overhead Ext.</div><div class="ex-sets">3 × 12 · Rest 60s</div><div class="ex-note">Full range of motion</div></div>
+            <div class="ex-card"><div class="ex-name">Push-Ups</div><div class="ex-sets">2 × MAX · Rest 60s</div><div class="ex-note">Beat Monday's count</div></div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-fri">
+          <div style="font-family:var(--font-d);font-size:20px;letter-spacing:3px;color:var(--accent);margin-bottom:6px;">FRI — FULL BODY</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">After 5 treadmill rounds — full body compound moves. This is your HYROX simulation day.</div>
+          <div class="ex-grid">
+            <div class="ex-card"><div class="ex-name">DB Squat to Press</div><div class="ex-sets">3 × 10 · Rest 60s</div><div class="ex-note">Squat + press as you rise</div></div>
+            <div class="ex-card"><div class="ex-name">DB Bent Row</div><div class="ex-sets">3 × 10 · Rest 60s</div><div class="ex-note">Hinge forward, row</div></div>
+            <div class="ex-card"><div class="ex-name">DB Bench Press</div><div class="ex-sets">3 × 10 · Rest 60s</div><div class="ex-note">Controlled full range</div></div>
+            <div class="ex-card"><div class="ex-name">DB Lunges</div><div class="ex-sets">3 × 10 each · Rest 60s</div><div class="ex-note">Back knee near floor</div></div>
+            <div class="ex-card"><div class="ex-name">DB Farmers Carry</div><div class="ex-sets">3 × 40m walk</div><div class="ex-note">Both DBs, walk tall</div></div>
+            <div class="ex-card"><div class="ex-name">Plank</div><div class="ex-sets">2 × 30s · Rest 45s</div><div class="ex-note">Tight core, breathe</div></div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-sat">
+          <div class="rest-card">
+            <div style="font-size:40px;margin-bottom:10px;">😴</div>
+            <div style="font-family:var(--font-d);font-size:28px;letter-spacing:4px;color:var(--green);">REST DAY</div>
+            <div style="color:var(--muted);margin-top:10px;font-size:13px;line-height:1.7;">Muscles grow on rest days.<br>Casual family walk is fine. No gym. No guilt.</div>
+          </div>
+        </div>
+
+        <div class="workout-day" id="day-sun">
+          <div class="rest-card">
+            <div style="font-size:40px;margin-bottom:10px;">🏡</div>
+            <div style="font-family:var(--font-d);font-size:28px;letter-spacing:4px;color:var(--green);">REST + PREP DAY</div>
+            <div style="color:var(--muted);margin-top:10px;font-size:13px;line-height:1.7;">Boil eggs for the week. Meal prep if possible.<br><strong style="color:var(--green)">Prepare. Then go again Monday.</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BREAKFAST + MORNING ── -->
+      <div class="section-block">
+        <div class="section-head">
+          <div class="section-icon si-yellow">🍳</div>
+          <div class="section-title">POST-WORKOUT FUEL</div>
+          <div class="section-sub">7:00 – 8:30AM</div>
+        </div>
+        <div class="timeline">
+          <div class="tl-line"></div>
+          <div class="tl-item"><div class="tl-time">7:00</div><div class="tl-body g">
+            <div class="tl-name">🍳 BREAKFAST — Biggest Meal</div>
+            <div class="tl-desc"><strong>3 whole boiled eggs</strong> + <strong>2 slices wholegrain bread or 1 cup oats</strong> + <strong>1 banana or handful nuts</strong> + <span class="blue">black coffee or teh tarik kurang manis (1x only)</span><br><br>🎯 Target: <strong>~25–30g protein</strong></div>
+            <div class="tags"><span class="tag tag-g">MEAL 1</span><span class="tag tag-r">NEVER SKIP</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">7:00</div><div class="tl-body y">
+            <div class="tl-name">💊 Vitamin B Complex</div>
+            <div class="tl-desc">1 tablet with food. Energy and metabolism for your 9-hour desk day.</div>
+            <div class="tags"><span class="tag tag-y">SUPPLEMENT</span></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- ── OFFICE ── -->
+      <div class="section-block">
+        <div class="section-head">
+          <div class="section-icon si-blue">🏢</div>
+          <div class="section-title">OFFICE</div>
+          <div class="section-sub">9:00AM – 6:00PM</div>
+        </div>
+        <div class="timeline">
+          <div class="tl-line"></div>
+          <div class="tl-item"><div class="tl-time">9:00</div><div class="tl-body b">
+            <div class="tl-name">💧 Water Bottle on Desk</div>
+            <div class="tl-desc"><strong>500ml before lunch.</strong> Alarm every 90 min: <span class="blue">"DRINK WATER"</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">Every<br>90m</div><div class="tl-body">
+            <div class="tl-name">🚶 Stand Up 2 Min</div>
+            <div class="tl-desc">Walk to toilet or pantry. 10 hours sitting kills your morning workout gains.</div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">1:00</div><div class="tl-body g">
+            <div class="tl-name">🍚 LUNCH — Moderate</div>
+            <div class="tl-desc"><strong>Rice: 1 cup max</strong> + <strong>protein palm-sized</strong> + <strong>unlimited veg</strong> + <span class="blue">plain water only</span><br>❌ <span class="red">No nasi goreng, no sugary drinks</span><br>🎯 <strong>~30–40g protein</strong></div>
+            <div class="tags"><span class="tag tag-g">MEAL 2</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">1:30</div><div class="tl-body">
+            <div class="tl-name">🚶 10-Min Walk After Lunch</div>
+            <div class="tl-desc">Slow pace is fine. Helps digestion. Adds daily steps.</div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">6:00</div><div class="tl-body r">
+            <div class="tl-name">🚪 Leave — No Heavy Tapau</div>
+            <div class="tl-desc"><span class="red">Decide light dinner before you leave. Hungry decisions = bad decisions.</span></div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- ── EVENING ── -->
+      <div class="section-block">
+        <div class="section-head">
+          <div class="section-icon si-purple">🌆</div>
+          <div class="section-title">EVENING</div>
+          <div class="section-sub">6:30PM – 11:00PM</div>
+        </div>
+        <div class="timeline">
+          <div class="tl-line"></div>
+          <div class="tl-item"><div class="tl-time">6:30</div><div class="tl-body">
+            <div class="tl-name">Home — Family Time 🏡</div>
+            <div class="tl-desc">Evening is yours. No workout tonight. Rest, play with kids, talk to Amni. This is what you worked hard for this morning.</div>
+            <div class="tags"><span class="tag tag-g">FAMILY</span><span class="tag tag-p">RECOVERY</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">7:30</div><div class="tl-body g">
+            <div class="tl-name">🍜 DINNER — Lightest Meal</div>
+            <div class="tl-desc"><strong>Option A:</strong> Clear soup (sup ayam / tomyam / sup ikan)<br><strong>Option B:</strong> 2–3 boiled eggs + salad + canned tuna<br><strong>Option C:</strong> Grilled chicken + vegetables<br>❌ <span class="red">No fried food, no heavy curry, done by 8pm</span><br>🎯 <strong>~25–30g protein</strong></div>
+            <div class="tags"><span class="tag tag-g">MEAL 3</span><span class="tag tag-r">LIGHTEST</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">8:00</div><div class="tl-body y">
+            <div class="tl-name">🦠 Probiotic</div>
+            <div class="tl-desc">Take after dinner. Evening timing lets gut bacteria colonize while you sleep.</div>
+            <div class="tags"><span class="tag tag-y">SUPPLEMENT</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">8:15</div><div class="tl-body r">
+            <div class="tl-name">🚫 Kitchen Closed</div>
+            <div class="tl-desc"><strong>Water only after this.</strong> Fat burning window starts now. Protect it.</div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">10:30</div><div class="tl-body p">
+            <div class="tl-name">💊 Magnesium Glycinate</div>
+            <div class="tl-desc">Take before sleep. <strong>Better sleep quality, less soreness, lower cortisol.</strong> This also helps you wake at 5am feeling rested not groggy.</div>
+            <div class="tags"><span class="tag tag-p">SUPPLEMENT</span></div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">10:30</div><div class="tl-body r">
+            <div class="tl-name">📵 Phone Down — Wind Down</div>
+            <div class="tl-desc"><span class="red">No TikTok. No YouTube.</span> Blue light suppresses melatonin. You need to be asleep by 11pm to get 6 hours before 5am.</div>
+          </div></div>
+          <div class="tl-item"><div class="tl-time">11:00</div><div class="tl-body g">
+            <div class="tl-name">😴 SLEEP — Lights Off</div>
+            <div class="tl-desc"><strong>6 hours sleep. Wake 5am.</strong> Poor sleep = higher cortisol = more belly fat. Sleep is half the fat loss equation. Protect it every night.</div>
+            <div class="tags"><span class="tag tag-r">NON-NEGOTIABLE</span></div>
+          </div></div>
+        </div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  `;
+
+  // Auto-select today
+  const days = ['sun','mon','tue','wed','thu','fri','sat'];
+  const today = days[new Date().getDay()];
+  const dayKeys = ['mon','tue','wed','thu','fri','sat','sun'];
+  const idx = dayKeys.indexOf(today);
+  const tabs = document.querySelectorAll('.day-tab');
+  document.querySelectorAll('.workout-day').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('day-' + today)?.classList.add('active');
+  if (tabs[idx]) tabs[idx].classList.add('active');
+})();
+
+function showDay(day, el) {
+  document.querySelectorAll('.workout-day').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('day-' + day)?.classList.add('active');
+  el.classList.add('active');
+}
+
+async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYROX Life — Coach Rules</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .rule-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 10px; display: flex; gap: 16px; align-items: flex-start; transition: border-color 0.2s, transform 0.2s; animation: fadeUp 0.5s ease both; }
+  .rule-card:hover { border-color: rgba(240,192,64,0.4); transform: translateX(4px); }
+  .rule-num { font-family: var(--font-d); font-size: 36px; color: var(--accent); line-height: 1; flex-shrink: 0; width: 44px; }
+  .rule-body {}
+  .rule-title { font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 5px; }
+  .rule-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .rule-desc strong { color: var(--text2); }
+  .rule-card:nth-child(1) { animation-delay: 0.05s; }
+  .rule-card:nth-child(2) { animation-delay: 0.1s; }
+  .rule-card:nth-child(3) { animation-delay: 0.15s; }
+  .rule-card:nth-child(4) { animation-delay: 0.2s; }
+  .rule-card:nth-child(5) { animation-delay: 0.25s; }
+  .rule-card:nth-child(6) { animation-delay: 0.3s; }
+  .rule-card:nth-child(7) { animation-delay: 0.35s; }
+  .rule-card:nth-child(8) { animation-delay: 0.4s; }
+  .manifesto { background: linear-gradient(135deg, rgba(240,192,64,0.1), rgba(64,200,240,0.06)); border: 1px solid rgba(240,192,64,0.25); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; text-align: center; }
+  .manifesto p { font-size: 14px; color: var(--text2); line-height: 1.8; }
+  .manifesto strong { color: var(--accent); font-size: 16px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-text">LOADING RULES</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <span class="nav-icon">✅</span>
+    <span class="nav-label">Today</span>
+  </a>
+  <a href="plan.html" class="nav-item">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Plan</span>
+  </a>
+  <a href="progress.html" class="nav-item">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Progress</span>
+  </a>
+  <a href="rules.html" class="nav-item active">
+    <span class="nav-icon">⚡</span>
+    <span class="nav-label">Rules</span>
+  </a>
+  <a href="supplements.html" class="nav-item">
+    <span class="nav-icon">💊</span>
+    <span class="nav-label">Supps</span>
+  </a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const RULES = [
+  {
+    num: '01',
+    title: 'Water First. Always.',
+    desc: '500ml before phone, before toilet, before coffee. Every morning without fail. Dehydration is the invisible enemy — it mimics hunger, kills energy, and slows metabolism.'
+  },
+  {
+    num: '02',
+    title: 'Never Skip Cool Down.',
+    desc: 'Your joints will thank you at month 3. 10 minutes, every single session. Skipping it is how you get injured. Injury kills weeks of momentum.'
+  },
+  {
+    num: '03',
+    title: 'Dinner Done by 8pm.',
+    desc: 'Nothing after 8pm except plain water. No biscuits. No fruits. No "just a little." Your fat burning window starts when eating stops. Protect it every night.'
+  },
+  {
+    num: '04',
+    title: 'Whey Within 30 Min Post-Workout.',
+    desc: 'The post-workout anabolic window is real. Don\'t delay it. Don\'t skip it. Your muscles are rebuilding while you sleep — they need protein to do it properly.'
+  },
+  {
+    num: '05',
+    title: 'Rest Days Are Sacred.',
+    desc: 'Saturday and Sunday are recovery. Muscles don\'t grow during workouts — they grow during rest. Taking rest days isn\'t laziness. It\'s part of the plan. No guilt.'
+  },
+  {
+    num: '06',
+    title: 'Miss a Day? Just Continue.',
+    desc: 'Don\'t try to catch up. Don\'t punish yourself. One missed session out of 50 changes nothing. What matters is what you do next. Get back up and continue.'
+  },
+  {
+    num: '07',
+    title: 'Form Over Weight. Always.',
+    desc: '5kg done correctly builds more muscle than 10kg done wrong. And wrong form at your starting weight can injure your back, knees, or shoulders. Light and correct beats heavy and sloppy.'
+  },
+  {
+    num: '08',
+    title: 'Weigh Every Monday Morning.',
+    desc: 'After toilet, before eating, same time each week. Log the number. Don\'t weigh daily — water fluctuation will mess with your head. Weekly is enough to see the real trend.'
+  }
+];
+
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  const prof = await getUserProfile(session.user.id);
+
+  document.getElementById('app').innerHTML = `
+    <div class="page-wrap">
+      <div class="topbar anim-up">
+        <div>
+          <div class="topbar-logo">HYROX <span style="color:var(--text2)">LIFE</span></div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user">${prof.name.toUpperCase()}</div>
+          <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+      </div>
+
+      <div class="section-head anim-up-1" style="margin-bottom:20px;">
+        <div class="section-icon si-yellow">⚡</div>
+        <div class="section-title">COACH RULES</div>
+        <div class="section-sub">NON-NEGOTIABLE</div>
+      </div>
+
+      <div class="manifesto anim-up-2">
+        <p>This is not a temporary diet.<br>This is not a 90-day challenge.<br><strong>This is your lifestyle now.</strong><br><br>The rules below are not suggestions.<br>They are the habits that separate people who change<br>from people who keep trying to change.</p>
+      </div>
+
+      ${RULES.map(r => `
+        <div class="rule-card">
+          <div class="rule-num">${r.num}</div>
+          <div class="rule-body">
+            <div class="rule-title">${r.title}</div>
+            <div class="rule-desc">${r.desc}</div>
+          </div>
+        </div>
+      `).join('')}
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:8px;text-align:center;">
+        <div style="font-family:var(--font-d);font-size:22px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;">THE REAL GOAL</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8;">Not to reach ${prof.goal_weight}kg and stop.<br>Not to look good for one event.<br><strong style="color:var(--text2);">To become someone who lives this way permanently.</strong><br><br>The number on the scale is just a byproduct of who you become.</div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  `;
+})();
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>

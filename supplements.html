@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYROX Life — Supplements</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .supp-card { background: var(--card); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 10px; transition: transform 0.2s; animation: fadeUp 0.5s ease both; }
+  .supp-card:hover { transform: translateX(3px); }
+  .supp-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+  .supp-name { font-weight: 700; font-size: 15px; color: var(--text); }
+  .supp-timing { font-family: var(--font-m); font-size: 10px; letter-spacing: 1px; flex-shrink: 0; }
+  .supp-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+  .supp-how { font-size: 12px; color: var(--text2); background: var(--surface); border-radius: 7px; padding: 10px 12px; }
+  .supp-how strong { color: var(--accent); }
+  .supp-now { border: 1px solid rgba(240,192,64,0.35); }
+  .supp-next { border: 1px solid var(--border); opacity: 0.75; }
+  .supp-next:hover { opacity: 1; border-color: rgba(160,96,240,0.35); }
+  .supp-card:nth-child(1) { animation-delay: 0.05s; }
+  .supp-card:nth-child(2) { animation-delay: 0.1s; }
+  .supp-card:nth-child(3) { animation-delay: 0.15s; }
+  .supp-card:nth-child(4) { animation-delay: 0.2s; }
+  .supp-card:nth-child(5) { animation-delay: 0.25s; }
+  .supp-card:nth-child(6) { animation-delay: 0.3s; }
+  .timeline-vis { display: flex; align-items: center; overflow-x: auto; padding-bottom: 4px; }
+  .tvis-item { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+  .tvis-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; border: 2px solid var(--border); background: var(--surface); }
+  .tvis-dot.y { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+  .tvis-dot.g { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+  .tvis-dot.b { border-color: var(--accent2); background: var(--accent2-dim); color: var(--accent2); }
+  .tvis-dot.p { border-color: var(--purple); background: rgba(160,96,240,0.1); color: var(--purple); }
+  .tvis-line { flex: 1; height: 2px; background: var(--border); min-width: 10px; }
+  .tvis-time { font-family: var(--font-m); font-size: 9px; color: var(--muted); margin-top: 5px; letter-spacing: 1px; text-align: center; }
+  .tvis-name { font-size: 10px; color: var(--text2); margin-top: 2px; text-align: center; max-width: 60px; line-height: 1.2; }
+  .section-label { font-family: var(--font-d); font-size: 14px; letter-spacing: 3px; color: var(--muted); margin: 20px 0 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-text">LOADING SUPPLEMENTS</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item"><span class="nav-icon">✅</span><span class="nav-label">Today</span></a>
+  <a href="plan.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Plan</span></a>
+  <a href="progress.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Progress</span></a>
+  <a href="rules.html" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-label">Rules</span></a>
+  <a href="supplements.html" class="nav-item active"><span class="nav-icon">💊</span><span class="nav-label">Supps</span></a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  const prof = await getUserProfile(session.user.id);
+
+  document.getElementById('app').innerHTML = `
+    <div class="page-wrap">
+      <div class="topbar anim-up">
+        <div><div class="topbar-logo">HYROX <span style="color:var(--text2)">LIFE</span></div></div>
+        <div class="topbar-right">
+          <div class="topbar-user">${prof.name.toUpperCase()}</div>
+          <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+      </div>
+
+      <div class="section-head anim-up-1" style="margin-bottom:16px;">
+        <div class="section-icon si-yellow">💊</div>
+        <div class="section-title">SUPPLEMENTS</div>
+        <div class="section-sub">WHAT · WHEN · WHY</div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="card anim-up-2" style="overflow-x:auto;">
+        <div style="font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">DAILY TIMELINE</div>
+        <div class="timeline-vis">
+          <div class="tvis-item"><div class="tvis-dot y">W</div><div class="tvis-time">6:40AM</div><div class="tvis-name">Whey Protein</div></div>
+          <div class="tvis-line"></div>
+          <div class="tvis-item"><div class="tvis-dot y">B</div><div class="tvis-time">7:00AM</div><div class="tvis-name">Vitamin B</div></div>
+          <div class="tvis-line"></div>
+          <div class="tvis-item"><div class="tvis-dot p">D</div><div class="tvis-time">7:00AM</div><div class="tvis-name">Vit D3 ⭐</div></div>
+          <div class="tvis-line"></div>
+          <div class="tvis-item"><div class="tvis-dot p">Ω</div><div class="tvis-time">1:00PM</div><div class="tvis-name">Omega-3 ⭐</div></div>
+          <div class="tvis-line"></div>
+          <div class="tvis-item"><div class="tvis-dot g">P</div><div class="tvis-time">8:00PM</div><div class="tvis-name">Probiotic</div></div>
+          <div class="tvis-line"></div>
+          <div class="tvis-item"><div class="tvis-dot p">Mg</div><div class="tvis-time">10:30PM</div><div class="tvis-name">Magnesium</div></div>
+        </div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--muted);margin-top:10px;">⭐ = Add these next when ready.</div>
+      </div>
+
+      <div class="section-label anim-up-2">✅ YOU HAVE NOW</div>
+
+      <div class="supp-card supp-now">
+        <div class="supp-header">
+          <div class="supp-name">🥛 Whey Protein</div>
+          <span class="tag tag-r supp-timing">6:40AM · POST-WORKOUT</span>
+        </div>
+        <div class="supp-desc">You now work out in the morning — so whey goes straight after your session. Muscles are primed to absorb protein immediately post-workout. At a calorie deficit this is what preserves your muscle while you lose fat. Without it, the body cannibalises muscle alongside fat — you lose weight but become weaker and slower.</div>
+        <div class="supp-how"><strong>How:</strong> 1 scoop (~25g protein) in 300ml cold water immediately after cool down, before shower. Cold water mixes cleaner. Don't use milk — slows absorption. Drink within 30 min of finishing workout.</div>
+      </div>
+
+      <div class="supp-card supp-now">
+        <div class="supp-header">
+          <div class="supp-name">💊 Vitamin B Complex</div>
+          <span class="tag tag-y supp-timing">7:00AM · WITH BREAKFAST</span>
+        </div>
+        <div class="supp-desc">After a 5am workout, your body has burned through B vitamins rapidly. B vitamins are essential for energy metabolism, nerve function, and converting food into fuel. Desk workers who train in the morning especially benefit — the combination of early wake + office work + depletion from training makes this critical.</div>
+        <div class="supp-how"><strong>How:</strong> 1 tablet with breakfast, not on an empty stomach. B vitamins on an empty stomach can cause nausea. Morning timing ensures sustained energy through your 9–6 workday.</div>
+      </div>
+
+      <div class="supp-card supp-now">
+        <div class="supp-header">
+          <div class="supp-name">🦠 Probiotic</div>
+          <span class="tag tag-g supp-timing">8:00PM · AFTER DINNER</span>
+        </div>
+        <div class="supp-desc">Gut health directly affects fat loss through hunger hormone regulation (ghrelin and leptin), inflammation reduction, and nutrient absorption. A healthy gut microbiome also reduces the bloating and digestive sluggishness that comes with higher-protein eating. Evening timing lets bacteria colonize undisturbed while you sleep.</div>
+        <div class="supp-how"><strong>How:</strong> After dinner, not with food. Don't take with hot drinks — heat kills the bacteria. Store in fridge if your brand requires it. Consistent daily timing matters more than perfect timing.</div>
+      </div>
+
+      <div class="supp-card supp-now" style="border-color:rgba(160,96,240,0.4);">
+        <div class="supp-header">
+          <div class="supp-name">🌙 Magnesium Glycinate</div>
+          <span class="tag tag-p supp-timing">10:30PM · BEFORE SLEEP</span>
+        </div>
+        <div class="supp-desc">You now wake at 5am. Sleep quality is everything. Magnesium glycinate is the most absorbable form — it crosses the blood-brain barrier and promotes deep, restorative sleep. It also reduces post-workout muscle soreness significantly, which is important for morning training. Low magnesium causes poor sleep, muscle cramps, and anxiety — all of which kill consistency.</div>
+        <div class="supp-how"><strong>How:</strong> 200–400mg 30 min before sleep. Glycinate form specifically — avoid magnesium oxide (poor absorption, causes digestive issues). Take consistently every night. Effects compound over 2–3 weeks.</div>
+      </div>
+
+      <div class="section-label">⭐ ADD THESE NEXT</div>
+
+      <div class="supp-card supp-next">
+        <div class="supp-header">
+          <div class="supp-name">☀️ Vitamin D3 + K2</div>
+          <span class="tag tag-p supp-timing">7:00AM · WITH BREAKFAST</span>
+        </div>
+        <div class="supp-desc">Despite living near the equator, most Malaysians in desk jobs are D3-deficient — we're indoors all day. Low D3 causes fatigue, weak immunity, impaired fat metabolism, and low mood. You now train at 5am before sunrise, meaning zero sun exposure before office. D3 is non-negotiable. K2 ensures calcium goes to bones, not arteries.</div>
+        <div class="supp-how"><strong>How:</strong> 2000–4000 IU D3 + 100mcg K2 daily with a fatty meal (eggs work perfectly). ~RM30–50/month. Look for combined D3+K2 capsules for convenience.</div>
+      </div>
+
+      <div class="supp-card supp-next">
+        <div class="supp-header">
+          <div class="supp-name">🐟 Omega-3 Fish Oil</div>
+          <span class="tag tag-p supp-timing">1:00PM · WITH LUNCH</span>
+        </div>
+        <div class="supp-desc">At 120kg, systemic inflammation is elevated — it's why joints ache and recovery feels slow. Omega-3 (EPA + DHA specifically) directly suppresses inflammatory pathways. This means faster recovery from morning workouts, less joint pain as you increase running intensity, and better fat metabolism. Highly evidence-backed.</div>
+        <div class="supp-how"><strong>How:</strong> 2–3g EPA+DHA daily with lunch (fats improve absorption). ~RM40–60/month. Check the label for EPA+DHA content, not just "fish oil 1000mg" — many brands have low active content per capsule.</div>
+      </div>
+
+      <!-- AVOID -->
+      <div class="card red" style="margin-top:8px;">
+        <div class="section-head">
+          <div class="section-icon si-red">🚫</div>
+          <div class="section-title">AVOID</div>
+        </div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+          ❌ <strong style="color:var(--text2)">Fat burners / thermogenics</strong> — mostly caffeine and stimulants. Not worth the side effects.<br>
+          ❌ <strong style="color:var(--text2)">Pre-workout powders</strong> — dates or a banana before your 5am session is enough. Real food > powder.<br>
+          ❌ <strong style="color:var(--text2)">Meal replacement shakes</strong> — real food keeps you full longer. Don't replace meals with shakes.<br>
+          ❌ <strong style="color:var(--text2)">Testosterone boosters</strong> — no credible evidence base. Save your money.<br>
+          ❌ <strong style="color:var(--text2)">Weight loss pills</strong> — the only proven fat loss mechanism is sustained calorie deficit. Pills don't create that.
+        </div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  `;
+})();
+
+async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

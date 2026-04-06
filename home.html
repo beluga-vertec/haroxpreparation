@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYROX Life — Today</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .date-bar { font-family: var(--font-m); font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-bottom: 20px; }
+  .streak-banner { background: linear-gradient(135deg, rgba(240,192,64,0.15), rgba(240,192,64,0.05)); border: 1px solid rgba(240,192,64,0.3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .streak-num { font-family: var(--font-d); font-size: 42px; color: var(--accent); line-height: 1; }
+  .streak-label { font-family: var(--font-m); font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+  .streak-right { text-align: right; }
+  .streak-msg { font-size: 13px; color: var(--text2); font-style: italic; max-width: 160px; text-align: right; line-height: 1.4; }
+  .check-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; cursor: pointer; transition: all 0.2s; user-select: none; margin-bottom: 6px; }
+  .check-item:hover { border-color: var(--border2); }
+  .check-item.done { opacity: 0.55; border-color: rgba(64,232,168,0.3); background: rgba(64,232,168,0.04); }
+  .check-box { width: 22px; height: 22px; border: 2px solid var(--border2); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; color: transparent; }
+  .check-item.done .check-box { background: var(--green); border-color: var(--green); color: var(--bg); }
+  .check-text { font-size: 13px; color: var(--text); flex: 1; transition: all 0.2s; line-height: 1.3; }
+  .check-item.done .check-text { text-decoration: line-through; color: var(--muted); }
+  .check-time { font-family: var(--font-m); font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .prog-label { display: flex; justify-content: space-between; font-family: var(--font-m); font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .water-grid { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 8px; }
+  .water-cup { width: 34px; height: 42px; border: 2px solid var(--border2); border-radius: 6px; background: rgba(64,200,240,0.06); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0.4; }
+  .water-cup.filled { background: rgba(64,200,240,0.25); border-color: var(--accent2); opacity: 1; }
+  .water-cup:hover { border-color: var(--accent2); opacity: 0.8; }
+  .water-info { display: flex; justify-content: space-between; font-family: var(--font-m); font-size: 11px; color: var(--muted); }
+  .water-info span { color: var(--accent2); }
+  .weight-row { display: flex; gap: 10px; align-items: flex-end; }
+  .weight-row input { flex: 1; }
+  .btn-log { padding: 12px 20px; border-radius: 8px; background: var(--accent); color: var(--bg); font-family: var(--font-d); font-size: 16px; letter-spacing: 2px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-log:hover { background: #ffd060; }
+  .last-weight { font-family: var(--font-m); font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .last-weight span { color: var(--accent); }
+  .week-dots { display: flex; gap: 8px; margin-top: 10px; }
+  .week-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--font-m); font-size: 9px; color: var(--muted); flex-direction: column; gap: 1px; }
+  .week-dot.done { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .week-dot.today { border-color: var(--accent); color: var(--accent); }
+  .week-dot .dot-day { font-size: 8px; }
+  .week-dot .dot-check { font-size: 12px; }
+  .check-section-label { font-family: var(--font-d); font-size: 13px; letter-spacing: 3px; color: var(--muted); padding: 10px 4px 4px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-text">LOADING YOUR DAY</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item active"><span class="nav-icon">✅</span><span class="nav-label">Today</span></a>
+  <a href="plan.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">Plan</span></a>
+  <a href="progress.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-label">Progress</span></a>
+  <a href="rules.html" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-label">Rules</span></a>
+  <a href="supplements.html" class="nav-item"><span class="nav-icon">💊</span><span class="nav-label">Supps</span></a>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+// ── UPDATED ROUTINE: 5AM WAKE, MORNING WORKOUT, 11PM SLEEP ──
+const TASKS = [
+  // MORNING WORKOUT
+  { id: 'wake_water',    text: 'Wake up — drink 500ml water immediately',              time: '5:00AM',  section: '🌅 MORNING WORKOUT' },
+  { id: 'preworkout',    text: 'Pre-workout — 2 dates or half banana',                 time: '5:05AM'  },
+  { id: 'warmup',        text: 'Warm up — 8 min (march, circles, hip, squats)',        time: '5:10AM'  },
+  { id: 'treadmill',     text: 'Treadmill — 5 rounds running (25–30 min)',             time: '5:18AM'  },
+  { id: 'weights',       text: 'Dumbbell workout straight after run',                  time: '5:50AM'  },
+  { id: 'cooldown',      text: 'Cool down — 10 min stretches',                         time: '6:30AM'  },
+  { id: 'whey',          text: 'Whey protein — 1 scoop in 300ml water',               time: '6:40AM'  },
+  { id: 'shower',        text: 'Shower — lukewarm then cool water finish',             time: '6:45AM'  },
+  // FUEL
+  { id: 'breakfast',     text: 'Breakfast — 3 boiled eggs + bread/oats + fruit',      time: '7:00AM',  section: '🍳 FUEL' },
+  { id: 'vitamin_b',     text: 'Take Vitamin B Complex with breakfast',                time: '7:00AM'  },
+  // OFFICE
+  { id: 'water_office',  text: 'Water bottle on desk — 500ml before lunch',           time: 'Morning', section: '🏢 OFFICE' },
+  { id: 'stand_up',      text: 'Stand up & walk 2 min every 90 minutes',              time: 'Every 90m'},
+  { id: 'lunch',         text: 'Lunch — rice + protein + veg, plain water only',      time: '1:00PM'  },
+  { id: 'walk_lunch',    text: 'Walk 10 min after lunch',                              time: '1:30PM'  },
+  { id: 'water_pm',      text: 'Drink 500ml water — afternoon check',                 time: '3:00PM'  },
+  // EVENING
+  { id: 'dinner',        text: 'Dinner — light (soup / eggs / veg). Done by 8pm.',    time: '7:30PM',  section: '🌆 EVENING' },
+  { id: 'probiotic',     text: 'Take Probiotic after dinner',                          time: '8:00PM'  },
+  { id: 'kitchen_closed',text: 'Kitchen closed — water only after this',               time: '8:15PM'  },
+  { id: 'family_time',   text: 'Family time — rest, relax, recharge',                 time: '8:30PM'  },
+  // WIND DOWN
+  { id: 'magnesium',     text: 'Take Magnesium Glycinate',                             time: '10:30PM', section: '🌙 WIND DOWN' },
+  { id: 'no_screen',     text: 'Phone down — no screens, wind down',                   time: '10:30PM' },
+  { id: 'sleep',         text: 'Lights off — sleep (6 hrs to 5am wake)',              time: '11:00PM' },
+];
+
+let userId, profile, waterCups = 0, completedTasks = [];
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+function getStreak(logs) {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 1; i <= 365; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const log = logs.find(l => l.date === ds);
+    if (log && log.completed_tasks && log.completed_tasks.length >= 5) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getStreakMessage(s) {
+  if (s === 0) return "Start your streak today. Day 1 begins now.";
+  if (s < 3)   return "Good start. Keep the momentum going.";
+  if (s < 7)   return "Building the habit. Don't break the chain.";
+  if (s < 14)  return "One week strong. This is becoming who you are.";
+  if (s < 30)  return "Two weeks in. The habit is forming.";
+  return `${s} days. This is your lifestyle now.`;
+}
+
+async function saveChecklist() {
+  await supabase.from('checklist_logs').upsert({
+    user_id: userId, date: todayStr(),
+    completed_tasks: completedTasks, water_cups: waterCups
+  }, { onConflict: 'user_id,date' });
+}
+
+async function logWeight() {
+  const val = parseFloat(document.getElementById('weight-input').value);
+  if (!val || val < 20 || val > 400) return showToast('Enter a valid weight', 'error');
+  const { error } = await supabase.from('weight_logs').upsert(
+    { user_id: userId, date: todayStr(), weight_kg: val },
+    { onConflict: 'user_id,date' }
+  );
+  if (error) showToast('Error saving weight', 'error');
+  else {
+    showToast('Weight logged ✓', 'success');
+    document.getElementById('last-weight-val').textContent = val + ' kg';
+    document.getElementById('weight-input').value = '';
+  }
+}
+
+function buildChecklist() {
+  let html = '', lastSection = null;
+  TASKS.forEach(t => {
+    if (t.section && t.section !== lastSection) {
+      html += `<div class="check-section-label">${t.section}</div>`;
+      lastSection = t.section;
+    }
+    html += `<div class="check-item ${completedTasks.includes(t.id) ? 'done' : ''}" onclick="toggleTask('${t.id}', this)">
+      <div class="check-box">✓</div>
+      <span class="check-text">${t.text}</span>
+      <span class="check-time">${t.time}</span>
+    </div>`;
+  });
+  return html;
+}
+
+async function toggleTask(id, el) {
+  if (completedTasks.includes(id)) { completedTasks = completedTasks.filter(t => t !== id); el.classList.remove('done'); }
+  else { completedTasks.push(id); el.classList.add('done'); }
+  const done = completedTasks.length, total = TASKS.length, pct = Math.round((done/total)*100);
+  document.querySelector('.prog-fill').style.width = pct + '%';
+  document.querySelector('.section-sub').textContent = done + '/' + total + ' DONE';
+  await saveChecklist();
+}
+
+function toggleWater(idx) {
+  waterCups = waterCups === idx + 1 ? idx : idx + 1;
+  document.querySelectorAll('.water-cup').forEach((c, i) => c.classList.toggle('filled', i < waterCups));
+  document.getElementById('water-ml').textContent = (waterCups * 250) + 'ml consumed';
+  saveChecklist();
+}
+
+async function logout() { await supabase.auth.signOut(); window.location.href = 'index.html'; }
+
+function renderPage({ prof, todayChecklist, recentLogs, lastWeight }) {
+  completedTasks = todayChecklist?.completed_tasks || [];
+  waterCups = todayChecklist?.water_cups || 0;
+
+  const streak = getStreak(recentLogs);
+  const done = completedTasks.length, total = TASKS.length, pct = Math.round((done/total)*100);
+  const lostKg = lastWeight ? Math.max(0, prof.starting_weight - lastWeight.weight_kg).toFixed(1) : '0';
+  const journeyPct = lastWeight ? Math.min(100, ((prof.starting_weight - lastWeight.weight_kg) / (prof.starting_weight - prof.goal_weight)) * 100) : 0;
+
+  const weekDays = ['S','M','T','W','T','F','S'];
+  const today = new Date();
+  let weekDotsHtml = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const isToday = i === 0;
+    const log = recentLogs.find(l => l.date === ds);
+    const hasDone = log && log.completed_tasks && log.completed_tasks.length >= 5;
+    const cls = isToday ? 'today' : hasDone ? 'done' : '';
+    weekDotsHtml += `<div class="week-dot ${cls}"><span class="dot-day">${weekDays[d.getDay()]}</span><span class="dot-check">${hasDone ? '✓' : isToday ? '•' : ''}</span></div>`;
+  }
+
+  document.getElementById('app').innerHTML = `
+    <div class="page-wrap">
+      <div class="topbar anim-up">
+        <div>
+          <div class="topbar-logo">HYROX <span style="color:var(--text2)">LIFE</span></div>
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px;">MAKE IT A LIFESTYLE</div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user">${prof.name.toUpperCase()}</div>
+          <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+      </div>
+
+      <div class="date-bar anim-up-1">${formatDisplayDate(todayStr()).toUpperCase()}</div>
+
+      <div class="streak-banner anim-up-1">
+        <div>
+          <div class="streak-num">${streak}</div>
+          <div class="streak-label">DAY STREAK</div>
+          <div class="week-dots">${weekDotsHtml}</div>
+        </div>
+        <div class="streak-right"><div class="streak-msg">${getStreakMessage(streak)}</div></div>
+      </div>
+
+      <div class="card anim-up-2">
+        <div class="section-head">
+          <div class="section-icon si-yellow">✅</div>
+          <div class="section-title">TODAY</div>
+          <div class="section-sub">${done}/${total} DONE</div>
+        </div>
+        <div class="prog-label"><span>Daily habits</span><span>${pct}%</span></div>
+        <div class="prog-wrap" style="margin-bottom:14px;"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div id="checklist-items">${buildChecklist()}</div>
+      </div>
+
+      <div class="card blue anim-up-3">
+        <div class="section-head">
+          <div class="section-icon si-blue">💧</div>
+          <div class="section-title">WATER</div>
+          <div class="section-sub">TARGET 3L</div>
+        </div>
+        <div class="water-grid" id="water-grid">
+          ${Array.from({length:14},(_,i)=>`<div class="water-cup ${i<waterCups?'filled':''}" onclick="toggleWater(${i})">💧</div>`).join('')}
+        </div>
+        <div class="water-info"><span id="water-ml">${waterCups*250}ml consumed</span><span>/ 3,500ml</span></div>
+      </div>
+
+      <div class="card anim-up-3">
+        <div class="section-head">
+          <div class="section-icon si-yellow">⚖️</div>
+          <div class="section-title">WEIGHT</div>
+          <div class="section-sub">LOG TODAY</div>
+        </div>
+        <div class="weight-row">
+          <div style="flex:1;"><label>Today's weight (kg)</label>
+          <input type="number" id="weight-input" placeholder="${lastWeight?lastWeight.weight_kg:prof.starting_weight}" min="30" max="300" step="0.1"></div>
+          <button class="btn-log" onclick="logWeight()">LOG</button>
+        </div>
+        <div class="last-weight">Last logged: <span id="last-weight-val">${lastWeight?lastWeight.weight_kg+' kg on '+lastWeight.date:'No logs yet'}</span></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <div style="flex:1;text-align:center;"><div style="font-family:var(--font-d);font-size:24px;color:var(--accent);">${prof.starting_weight}</div><div style="font-family:var(--font-m);font-size:9px;color:var(--muted);letter-spacing:1px;">STARTED</div></div>
+            <div style="flex:1;text-align:center;"><div style="font-family:var(--font-d);font-size:24px;color:var(--green);">${lastWeight?lastWeight.weight_kg:prof.starting_weight}</div><div style="font-family:var(--font-m);font-size:9px;color:var(--muted);letter-spacing:1px;">NOW</div></div>
+            <div style="flex:1;text-align:center;"><div style="font-family:var(--font-d);font-size:24px;color:var(--accent2);">${lostKg}</div><div style="font-family:var(--font-m);font-size:9px;color:var(--muted);letter-spacing:1px;">KG LOST</div></div>
+          </div>
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--muted);margin-bottom:5px;letter-spacing:1px;">JOURNEY SO FAR</div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${journeyPct}%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--font-m);font-size:9px;color:var(--muted);margin-top:4px;"><span>${prof.starting_weight}kg</span><span>Target: ${prof.goal_weight}kg</span></div>
+        </div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>`;
+}
+
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  userId = session.user.id;
+
+  const [prof, todayChecklist, recentLogs, lastWeightRes] = await Promise.all([
+    getUserProfile(userId),
+    supabase.from('checklist_logs').select('*').eq('user_id', userId).eq('date', todayStr()).single().then(r => r.data),
+    supabase.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', {ascending: false}).limit(30).then(r => r.data || []),
+    supabase.from('weight_logs').select('*').eq('user_id', userId).order('date', {ascending: false}).limit(1).single().then(r => r.data)
+  ]);
+  profile = prof;
+  renderPage({ prof, todayChecklist, recentLogs, lastWeight: lastWeightRes });
+})();
+</script>
+</body>
+</html>

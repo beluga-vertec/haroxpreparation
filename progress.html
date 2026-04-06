@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYROX Life — Progress</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .chart-canvas { width: 100% !important; height: 220px !important; }
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th { font-family: var(--font-m); font-size: 10px; color: var(--muted); letter-spacing: 2px; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .log-table td { font-size: 13px; color: var(--text2); padding: 10px 10px; border-bottom: 1px solid var(--border); }
+  .log-table td:last-child { font-family: var(--font-m); font-size: 12px; }
+  .log-table tr:last-child td { border-bottom: none; }
+  .change-pos { color: var(--accent3); }
+  .change-neg { color: var(--green); }
+  .consistency-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+  .con-cell { aspect-ratio: 1; border-radius: 3px; background: var(--border); }
+  .con-cell.done { background: var(--green); }
+  .con-cell.partial { background: rgba(240,192,64,0.4); }
+  .con-day { font-family: var(--font-m); font-size: 8px; color: var(--muted); text-align: center; padding: 2px 0; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading">
+    <div class="loading-dot"></div>
+    <div class="loading-text">LOADING PROGRESS</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <span class="nav-icon">✅</span>
+    <span class="nav-label">Today</span>
+  </a>
+  <a href="plan.html" class="nav-item">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Plan</span>
+  </a>
+  <a href="progress.html" class="nav-item active">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Progress</span>
+  </a>
+  <a href="rules.html" class="nav-item">
+    <span class="nav-icon">⚡</span>
+    <span class="nav-label">Rules</span>
+  </a>
+  <a href="supplements.html" class="nav-item">
+    <span class="nav-icon">💊</span>
+    <span class="nav-label">Supps</span>
+  </a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  const userId = session.user.id;
+
+  const [prof, weightLogs, checkLogs] = await Promise.all([
+    getUserProfile(userId),
+    supabase.from('weight_logs').select('*').eq('user_id', userId).order('date', { ascending: true }).then(r => r.data || []),
+    supabase.from('checklist_logs').select('date,completed_tasks').eq('user_id', userId).order('date', { ascending: false }).limit(56).then(r => r.data || [])
+  ]);
+
+  const totalLost = weightLogs.length > 0
+    ? Math.max(0, prof.starting_weight - weightLogs[weightLogs.length - 1].weight_kg).toFixed(1)
+    : 0;
+
+  const consistentDays = checkLogs.filter(l => l.completed_tasks && l.completed_tasks.length >= 10).length;
+
+  // Consistency grid (last 8 weeks)
+  const today = new Date();
+  let gridCells = '';
+  const dayLabels = ['S','M','T','W','T','F','S'];
+  for (let i = 0; i < 7; i++) {
+    gridCells += `<div class="con-day">${dayLabels[i]}</div>`;
+  }
+  for (let i = 55; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const log = checkLogs.find(l => l.date === ds);
+    const tasks = log?.completed_tasks?.length || 0;
+    const cls = tasks >= 10 ? 'done' : tasks >= 5 ? 'partial' : '';
+    gridCells += `<div class="con-cell ${cls}" title="${ds}: ${tasks} tasks"></div>`;
+  }
+
+  document.getElementById('app').innerHTML = `
+    <div class="page-wrap">
+      <div class="topbar anim-up">
+        <div>
+          <div class="topbar-logo">HYROX <span style="color:var(--text2)">LIFE</span></div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-user">${prof.name.toUpperCase()}</div>
+          <button class="btn-logout" onclick="logout()">LOGOUT</button>
+        </div>
+      </div>
+
+      <div class="stat-row anim-up-1">
+        <div class="stat-box">
+          <div class="stat-val">${totalLost}</div>
+          <div class="stat-label">KG LOST</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">${weightLogs.length}</div>
+          <div class="stat-label">WEIGH-INS</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">${consistentDays}</div>
+          <div class="stat-label">FULL DAYS</div>
+        </div>
+      </div>
+
+      <!-- WEIGHT CHART -->
+      <div class="chart-wrap anim-up-2">
+        <div class="section-head" style="margin-bottom:16px;">
+          <div class="section-icon si-yellow">📈</div>
+          <div class="section-title">WEIGHT</div>
+          <div class="section-sub">JOURNEY</div>
+        </div>
+        ${weightLogs.length < 2 ? `
+          <div class="empty-state">
+            <div class="empty-icon">⚖️</div>
+            <p>Log your weight daily on the Today page.<br>Your chart will appear here after 2 entries.</p>
+          </div>
+        ` : `<canvas id="weightChart" class="chart-canvas"></canvas>`}
+      </div>
+
+      <!-- CONSISTENCY -->
+      <div class="card anim-up-3">
+        <div class="section-head">
+          <div class="section-icon si-green">🔥</div>
+          <div class="section-title">CONSISTENCY</div>
+          <div class="section-sub">LAST 8 WEEKS</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:2px;background:var(--green);"></div><span style="font-family:var(--font-m);font-size:9px;color:var(--muted);">10+ TASKS</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:2px;background:rgba(240,192,64,0.4);"></div><span style="font-family:var(--font-m);font-size:9px;color:var(--muted);">5-9 TASKS</span></div>
+          <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:2px;background:var(--border);"></div><span style="font-family:var(--font-m);font-size:9px;color:var(--muted);">MISSED</span></div>
+        </div>
+        <div class="consistency-grid">${gridCells}</div>
+      </div>
+
+      <!-- WEIGHT LOG TABLE -->
+      <div class="card anim-up-4">
+        <div class="section-head">
+          <div class="section-icon si-blue">📋</div>
+          <div class="section-title">LOG HISTORY</div>
+        </div>
+        ${weightLogs.length === 0 ? `<div class="empty-state" style="padding:20px;"><p>No weight logs yet. Log your weight daily on the Today page.</p></div>` : `
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>WEIGHT</th>
+              <th>CHANGE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[...weightLogs].reverse().slice(0, 20).map((log, i, arr) => {
+              const prev = arr[i + 1];
+              const change = prev ? (log.weight_kg - prev.weight_kg).toFixed(1) : null;
+              const changeClass = change < 0 ? 'change-neg' : change > 0 ? 'change-pos' : '';
+              const changeStr = change !== null ? (change > 0 ? '+' + change : change) + ' kg' : '—';
+              return `<tr>
+                <td>${log.date}</td>
+                <td><strong>${log.weight_kg} kg</strong></td>
+                <td class="${changeClass}">${changeStr}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`}
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  `;
+
+  // Draw chart
+  if (weightLogs.length >= 2) {
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: weightLogs.map(l => l.date),
+        datasets: [
+          {
+            label: 'Weight (kg)',
+            data: weightLogs.map(l => l.weight_kg),
+            borderColor: '#f0c040',
+            backgroundColor: 'rgba(240,192,64,0.08)',
+            borderWidth: 2,
+            pointBackgroundColor: '#f0c040',
+            pointRadius: 4,
+            tension: 0.3,
+            fill: true,
+          },
+          {
+            label: 'Target',
+            data: weightLogs.map(() => prof.goal_weight),
+            borderColor: 'rgba(64,232,168,0.4)',
+            borderWidth: 1,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c1c32',
+            borderColor: '#28284a',
+            borderWidth: 1,
+            titleColor: '#aaaacc',
+            bodyColor: '#f0c040',
+            titleFont: { family: 'JetBrains Mono', size: 10 },
+            bodyFont: { family: 'JetBrains Mono', size: 13 }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#666688', font: { family: 'JetBrains Mono', size: 9 }, maxRotation: 45 },
+            grid: { color: 'rgba(40,40,74,0.6)' }
+          },
+          y: {
+            ticks: { color: '#666688', font: { family: 'JetBrains Mono', size: 9 } },
+            grid: { color: 'rgba(40,40,74,0.6)' }
+          }
+        }
+      }
+    });
+  }
+})();
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>
