@@ -67,5 +67,33 @@ create policy "Users can update own checklist logs"
   on checklist_logs for update using (auth.uid() = user_id);
 
 -- ============================================
+-- 5. TRIGGER — Auto-create user profile after email confirmation
+-- This runs on the Supabase backend (bypasses RLS), so it's safe.
+-- The profile data comes from the metadata passed during signUp.
+-- ============================================
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.user_profiles (id, name, starting_weight, goal_weight)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'name',
+    (new.raw_user_meta_data->>'starting_weight')::numeric,
+    (new.raw_user_meta_data->>'goal_weight')::numeric
+  );
+  return new;
+end;
+$$;
+
+-- Fires when a new user is confirmed (inserted into auth.users)
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- ============================================
 -- DONE. Your database is ready.
 -- ============================================

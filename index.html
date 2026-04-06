@@ -161,7 +161,13 @@
     btn.textContent = 'CREATING...';
     btn.disabled = true;
 
-    const { data, error } = await db.auth.signUp({ email, password });
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, starting_weight: current, goal_weight: goal }
+      }
+    });
     if (error) {
       showError('reg-error', error.message);
       btn.textContent = 'CREATE ACCOUNT';
@@ -169,14 +175,12 @@
       return;
     }
 
-    // Save profile
-    if (data.user) {
-      await db.from('user_profiles').insert({
-        id: data.user.id,
-        name,
-        starting_weight: current,
-        goal_weight: goal
-      });
+    // Email confirmation required — profile will be created automatically after confirmation
+    if (!data.session) {
+      showError('reg-error', 'Account created! Check your email and click the confirmation link to log in.');
+      btn.textContent = 'CHECK YOUR EMAIL';
+      // leave button disabled so they don't re-submit
+      return;
     }
 
     window.location.href = 'home.html';
